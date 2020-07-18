@@ -147,7 +147,7 @@ Holds opening hours for a week day or specific date (when it's an override).
 This is the shape you'll get back when calling `.isOpen()`.
 
 | key | type | description |
-|---|---|---|---|
+|---|---|---|
 | open | `boolean` | If the provided date fall within visiting hours |
 | match | `HourMatchSetInterface | null` | Objects of the opening and closing hours matched or null. |
 | soonest | `VisitingHour | null` | If no match, the soonest match for the provided day or null when closed all day. |
@@ -157,7 +157,7 @@ This is the shape you'll get back when calling `.isOpen()`.
 An instance with a few getters that represent an opening hour.
 
 | key | type | description |
-|---|---|---|---|
+|---|---|---|
 | hours | `number` | The hours of the matched time. |
 | minutes | `number` | The minutes of the matched time. |
 | military | `string` | The match in military notation. |
@@ -169,7 +169,7 @@ An instance with a few getters that represent an opening hour.
 A set of open/close hours.
 
 | key | type | description |
-|---|---|---|---|
+|---|---|---|
 | open | `VisitingHour` | Open value of the matched visiting hours. |
 | close | `VisitingHour` | Close value of the matched visiting hours. |
 
