@@ -146,6 +146,8 @@ export class VisitingHours {
   }
 
   private writeCache (hoursMatch: HourMatchInterface, input: DateInputInterface): HourMatchInterface {
+    if (!this.live) return hoursMatch;
+
     const { open, match, soonest } = hoursMatch;
     const { source, offset } = this.sourceDate(new Date(input.ts), input.zoneName);
     const cache = open && match
