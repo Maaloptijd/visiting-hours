@@ -1,6 +1,6 @@
 {
   "name": "visiting-hours",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "An advanced, feature rich, optimised and tiny visiting-hours library.",
   "main": "lib/index.js",
   "scripts": {
