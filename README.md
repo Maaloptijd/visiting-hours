@@ -149,8 +149,8 @@ This is the shape you'll get back when calling `.isOpen()`.
 | key | type | description |
 |---|---|---|
 | open | `boolean` | If the provided date fall within visiting hours |
-| match | `HourMatchSetInterface | null` | Objects of the opening and closing hours matched or null. |
-| soonest | `VisitingHour | null` | If no match, the soonest match for the provided day or null when closed all day. |
+| match | `HourMatchSetInterface` or `null` | Objects of the opening and closing hours matched or null. |
+| soonest | `VisitingHour` or `null` | If no match, the soonest match for the provided day or null when closed all day. |
 
 ### VisitingHour
 
