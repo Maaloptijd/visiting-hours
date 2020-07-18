@@ -130,7 +130,7 @@ export class VisitingHours {
   }
 
   private checkCache (input: DateInputInterface): HourMatchInterface | void {
-    if (!this.live || !this.lastMatch || input.ts >= this.validUntil || (this?.lastTimeStamp ?? 0) >= input.ts) return;
+    if (!this.live || !this.lastMatch || input.ts >= this.validUntil || (this?.lastTimeStamp ?? 0) > input.ts) return;
 
     return this.lastMatch;
   }

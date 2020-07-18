@@ -128,6 +128,7 @@ describe('Regular hours', () => {
       hours.isOpen(new Date(2020, 6, 18, 22)), // 6. Closed and same
       hours.isOpen(new Date(2020, 6, 18, 23, 59)), // 7. Closed and same
       hours.isOpen(new Date(2020, 6, 19, 0, 10)), // 8. Closed but different (past midnight)
+      hours.isOpen(new Date(2020, 6, 19, 0, 10)), // 9. Exact same time
     ];
 
     expect(h[0].open).toBeFalsy();
@@ -148,5 +149,6 @@ describe('Regular hours', () => {
     expect(h[5]).toBe(h[6]);
     expect(h[6]).toBe(h[7]);
     expect(h[7]).not.toBe(h[8]);
+    expect(h[8]).toBe(h[9]);
   });
 });
