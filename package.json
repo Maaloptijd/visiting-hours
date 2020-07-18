@@ -1,0 +1,43 @@
+{
+  "name": "visiting-hours",
+  "version": "1.0.1",
+  "description": "An advanced, feature rich, optimised and tiny visiting-hours library.",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "TZ='Europe/Amsterdam' jest",
+    "type-check": "tsc --noEmit",
+    "type-check:watch": "npm run type-check -- --watch",
+    "build": "rm -rf lib && npm run build:types && npm run build:js",
+    "build:types": "tsc --emitDeclarationOnly",
+    "build:js": "babel src --out-dir lib --extensions \".ts,.tsx\"",
+    "prepublish": "npm run build"
+  },
+  "keywords": [
+    "opening",
+    "hours",
+    "time",
+    "date",
+    "visiting",
+    "luxon"
+  ],
+  "author": "RWOverdijk <r.w.overdijk@gmail.com>",
+  "license": "MIT",
+  "files": [
+    "lib"
+  ],
+  "devDependencies": {
+    "@babel/cli": "^7.10.4",
+    "@babel/core": "^7.10.4",
+    "@babel/plugin-proposal-class-properties": "^7.10.4",
+    "@babel/preset-env": "^7.10.4",
+    "@babel/preset-typescript": "^7.10.4",
+    "@types/jest": "^26.0.4",
+    "@types/luxon": "^1.24.1",
+    "@typescript-eslint/eslint-plugin": "^3.6.1",
+    "@typescript-eslint/parser": "^3.6.1",
+    "eslint": "^7.4.0",
+    "jest": "^26.1.0",
+    "luxon": "^1.24.1",
+    "typescript": "^3.9.7"
+  }
+}
