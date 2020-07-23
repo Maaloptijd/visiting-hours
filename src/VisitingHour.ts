@@ -9,10 +9,16 @@ export class VisitingHour {
 
   private _formatted?: string;
 
-  public constructor (private _timeValue: number) {}
+  private _timeValue: number;
+
+  public constructor (timeValue?: number | null, hours?: number, minutes?: number) {
+    this._hours = hours;
+    this._minutes = minutes;
+    this._timeValue = typeof timeValue === 'number' ? timeValue : 0;
+  }
 
   public get hours (): number {
-    if (!this._hours) {
+    if (typeof this._hours !== 'number') {
       this._hours = Math.floor(this._timeValue / 100);
     }
 
@@ -20,7 +26,7 @@ export class VisitingHour {
   }
 
   public get military (): string {
-    if (!this._military) {
+    if (typeof this._military !== 'string') {
       this._military = `${this.hours.toString().padStart(2, '0')}:${this.minutes.toString().padStart(2, '0')}`;
     }
 
@@ -28,7 +34,7 @@ export class VisitingHour {
   }
 
   public get minutes (): number {
-    if (!this._minutes) {
+    if (typeof this._minutes !== 'number') {
       this._minutes = this._timeValue % 100;
     }
 
@@ -51,10 +57,14 @@ export class VisitingHour {
   }
 
   public get formatted (): string {
-    if (!this._formatted) {
+    if (typeof this._formatted !== 'string') {
       this._formatted = this.date.toLocaleTimeString();
     }
 
     return this._formatted;
+  }
+
+  public toString (): string {
+    return this.military;
   }
 }

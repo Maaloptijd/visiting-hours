@@ -83,6 +83,9 @@ hours.isOpen(DateTime.local()).open;
 // Or use vanilla JS for timezone support
 //  (requires IANA tz identifiers. Modern browsers will work.)
 hours.isOpen(Utils.fromDate(new Date(2020, 6, 16, 15, 40), 'Europe/Amsterdam')).open;
+
+// Small utility function to make range of hours
+Utils.minuteInterval('08:01', '09:14', 15);  // ['08:15', '08:30', '08:45', '09:00']
 ```
 
 ## Interfaces
