@@ -6,6 +6,7 @@ import { SpecialIndexInterface } from './Interface/SpecialIndexInterface';
 import { DateInputInterface } from './Interface/DateInputInterface';
 import { LuxonShapeInterface } from './Interface/LuxonShapeInterface';
 import { Timezone } from './Timezone';
+import { VisitingHour } from './VisitingHour';
 
 export class Utils {
   public static leapYearKey = '__leapYear';
@@ -31,6 +32,35 @@ export class Utils {
 
   public static dayName (index: number): string {
     return Utils.dayNames[index];
+  }
+
+  /**
+   * Create an array of times between `startAt` and `endAt` with an interval of `interval` minutes.
+   * Each entry in the array is a VisitingHour instance for easy manipulation.
+   *
+   *  Example: minuteInterval('07:55', '09:00', 15); // ['08:00', '08:15', '08:30', '08:45', '09:00']
+   *
+   * @param startAt
+   * @param endAt
+   * @param interval
+   */
+  public static minuteInterval (startAt: string, endAt: string, interval: number): VisitingHour[] {
+    const [sh, sm] = startAt.split(':').map(Number);
+    const [eh, em] = endAt.split(':').map(Number);
+    const lastStep = (60 - interval);
+    const trailing = sm % interval;
+    const startMinute = sm > lastStep ? 0 : (sm - trailing) + (trailing ? interval : 0);
+    const lastMinute = em - (em % interval);
+    const startHour = sh + (sm > lastStep ? 1 : 0);
+    const values = [];
+
+    for (let i = startHour; i <= eh; i++) {
+      for (let j = startHour === i ? startMinute : 0; j <= (i === eh ? lastMinute : lastStep); j += interval) {
+        values.push(new VisitingHour(null, i, j));
+      }
+    }
+
+    return values;
   }
 
   public static fromLuxon (date: LuxonShapeInterface): DateInputInterface {
