@@ -30,14 +30,5 @@ describe('Timezone', () => {
 
       expect(desired.getTime()).toEqual(expectedTime);
     });
-
-    test('it also works across timezones of which neither are local', () => {
-      const zone = 'Europe/Istanbul'; // +03:00
-      const now = new Date(2020, 6, 24, 11, 45, 0, 0);
-      const expectedTime = new Date(2020, 6, 25, 1).getTime();
-      const desired = Timezone.fromTimeString('02:00', zone, now);
-
-      expect(desired.getTime()).toEqual(expectedTime);
-    });
   });
 });
