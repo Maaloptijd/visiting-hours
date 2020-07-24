@@ -27,7 +27,7 @@ This library is optimized to perform well when called frequently for many venues
 I prefer code over lengthy explanations so, take a gander:
 
 ```ts
-import { VisitingHours, Utils } from 'visiting-hours';
+import { VisitingHours, Utils, Timezone } from 'visiting-hours';
 import { DateTime } from 'luxon';
 
 const hours = new VisitingHours({
@@ -86,6 +86,9 @@ hours.isOpen(Utils.fromDate(new Date(2020, 6, 16, 15, 40), 'Europe/Amsterdam')).
 
 // Small utility function to make range of hours
 Utils.minuteInterval('08:01', '09:14', 15);  // ['08:15', '08:30', '08:45', '09:00']
+
+// Get a Date representing a value in the future
+Timezone.fromTimeString('02:00', 'Europe/Amsterdam', new Date());
 ```
 
 ## Interfaces
