@@ -47,6 +47,18 @@ export class Timezone {
 
     return offsetMilliseconds ? new Date(utcDate.getTime() + (-offsetMilliseconds)) : utcDate;
   }
+
+  public static fromTimeString (time: string, zone: string, now = new Date): Date {
+    const [h, m] = time.split(':').map(Number);
+    const zoned = Timezone.utcToZonedTime(now, zone);
+    const diff = now.getTime() - zoned.getTime();
+
+    zoned.setHours(h + (zoned.getHours() > h ? 24 : 0));
+    zoned.setMinutes(m);
+    zoned.setMilliseconds(diff);
+
+    return zoned;
+  }
 }
 
 type Formatted = { year: number, month: number, day: number, hour: number, minute: number, second: number };
