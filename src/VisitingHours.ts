@@ -8,6 +8,8 @@ import { LuxonShapeInterface } from './Interface/LuxonShapeInterface';
 import { VisitingHour } from './VisitingHour';
 import { HourMatchInterface } from './Interface/HourMatchInterface';
 import { Timezone } from './Timezone';
+import { HourMatchSetInterface } from './Interface/HourMatchSetInterface';
+import { HoursInterface } from './Interface/HoursInterface';
 
 export class VisitingHours {
   private index?: IndexInterface;
@@ -61,6 +63,60 @@ export class VisitingHours {
     }
 
     return this.writeCache(this.checkDay(key, regularDate), date);
+  }
+
+  /**
+   * Returns all the remaining hour ranges for the provided date, included left-overs past midnight.
+   */
+  public getRemainingHours (inputDate: UndeterminedDateInputType): HourMatchSetInterface[] {
+    const date = this.getDateInput(inputDate);
+    const { hour, minute, month, day } = date;
+    const key = +`${hour}${minute.toString().padStart(2, '0')}`;
+    const { regularDate, specialDate, leapYearDate, postLeapYearDate } = this.dateKeys(date);
+    const allHours: HourMatchSetInterface[] = [];
+
+    function addBase (forHours: HoursInterface[]) {
+      let lowest = 2400;
+
+      forHours.forEach(h => {
+        const [o, c] = Utils.timeValues(h);
+
+        // We only want future times here.
+        if ((c < o ? c + 2400 : c) < key) return;
+
+        allHours.push({ open: new VisitingHour(o > key ? o : key), close: new VisitingHour(c)});
+
+        if (o < lowest) lowest = o;
+      });
+
+      return lowest;
+    }
+
+    const lowest = addBase(specialDate?.raw ?? regularDate?.raw ?? []);
+
+    // Lowest is already at midnight, so it really doesn't matter what else there is.
+    if (lowest === 0) {
+      return allHours;
+    }
+
+    function collect (hours: [number, number][]) {
+      const hour = hours?.find(([o, c]) => o === 0 && c > key && c < lowest);
+
+      if (hour) allHours.push({ open: new VisitingHour(key), close: new VisitingHour(hour[1])});
+    }
+
+    // Now let's collect a range past midnight. It can only be one of these.
+    if (postLeapYearDate?.pastMidnight && month === 2 && day === 1 && date.isInLeapYear) {
+      collect(postLeapYearDate.hours);
+    } else if (leapYearDate?.pastMidnight && ((month === 1 && day === 29) || (month === 2 && day === 1 && !date.isInLeapYear))) {
+      collect(leapYearDate.hours);
+    } else if (specialDate?.pastMidnight) {
+      collect(specialDate.hours);
+    } else if (regularDate?.pastMidnight) {
+      collect(regularDate.hours);
+    }
+
+    return allHours.sort((a, b) => a.open.timeValue - b.open.timeValue);
   }
 
   private getDateInput (inputDate: UndeterminedDateInputType): DateInputInterface {

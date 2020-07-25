@@ -11,10 +11,24 @@ export class VisitingHour {
 
   private _timeValue: number;
 
+  public constructor (timeValue: number)
+  public constructor (timeValue: null, hours: number, minutes: number)
   public constructor (timeValue?: number | null, hours?: number, minutes?: number) {
+    if (typeof timeValue === 'number') {
+      this._timeValue = timeValue;
+
+      return;
+    }
+
+    if (typeof hours !== 'number' || typeof minutes !== 'number') {
+      this._timeValue = 0;
+
+      return;
+    }
+
     this._hours = hours;
     this._minutes = minutes;
-    this._timeValue = typeof timeValue === 'number' ? timeValue : 0;
+    this._timeValue = +`${hours.toString().padStart(2, '0')}${minutes.toString().padStart(2, '0')}`;
   }
 
   public get hours (): number {
@@ -62,6 +76,10 @@ export class VisitingHour {
     }
 
     return this._formatted;
+  }
+
+  public get timeValue (): number {
+    return this._timeValue;
   }
 
   public toString (): string {

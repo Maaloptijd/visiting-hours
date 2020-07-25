@@ -44,7 +44,7 @@ export class Utils {
    * @param endAt
    * @param interval
    */
-  public static minuteInterval (startAt: string, endAt: string, interval: number): VisitingHour[] {
+  public static minuteInterval (startAt: string, endAt: string, interval = 15): VisitingHour[] {
     const [sh, sm] = startAt.split(':').map(Number);
     const [eh, em] = endAt.split(':').map(Number);
     const lastStep = (60 - interval);
@@ -52,10 +52,13 @@ export class Utils {
     const startMinute = sm > lastStep ? 0 : (sm - trailing) + (trailing ? interval : 0);
     const lastMinute = em - (em % interval);
     const startHour = sh + (sm > lastStep ? 1 : 0);
+    const endHour = eh >= startHour ? eh : eh + 24;
     const values = [];
 
-    for (let i = startHour; i <= eh; i++) {
-      for (let j = startHour === i ? startMinute : 0; j <= (i === eh ? lastMinute : lastStep); j += interval) {
+    for (let ip = startHour; ip <= endHour; ip++) {
+      const i = ip % 24;
+
+      for (let j = startHour === i ? startMinute : 0; j <= (i === endHour ? lastMinute : lastStep); j += interval) {
         values.push(new VisitingHour(null, i, j));
       }
     }
@@ -99,8 +102,12 @@ export class Utils {
     return Utils.dayName(date.getDay());
   }
 
-  public static nextDay(day: number): DayNumber {
+  public static nextDay (day: number): DayNumber {
     return (day + 1) % 7 as DayNumber;
+  }
+
+  public static toMilitary (hours: number, minutes: number): string {
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
   }
 
   public static buildSpecialIndex (special: HoursDayInterface[]): SpecialIndexInterface {
@@ -136,6 +143,10 @@ export class Utils {
     }, {} as IndexInterface);
   }
 
+  public static timeValues ({ open, close }: { open: string, close: string }): number[] {
+    return [+open.replace(':', ''), +close.replace(':', '')];
+  }
+
   private static makeDayIndex (
     day: HoursDayInterface,
     index: IndexInterface | SpecialIndexInterface,
@@ -145,8 +156,9 @@ export class Utils {
     return {
       ...fallback,
       open: day.isOpen,
-      hours: day.hours?.reduce((acc, { open, close }) => {
-        const [o, c] = [+open.replace(':', ''), +close.replace(':', '')];
+      raw: day.hours,
+      hours: day.hours?.reduce((acc, h) => {
+        const [o, c] = Utils.timeValues(h);
 
         if (o < c) {
           acc.push([o, c]);
