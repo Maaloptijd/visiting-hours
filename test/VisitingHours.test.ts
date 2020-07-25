@@ -512,4 +512,164 @@ describe('VisitingHours', () => {
       expect(h[8]).toBe(h[9]);
     });
   });
+
+  describe('Fetching hours', () => {
+    test('it collects and merges all hours for date across three days', () => {
+      const specialHours = new VisitingHours({
+        regular: {
+          tuesday: {
+            isOpen: true,
+            hours: [
+              { open: '19:00', close: '23:00' },
+              { open: '08:00', close: '18:00' },
+              { open: '23:30', close: '03:30' },
+            ],
+          },
+        },
+        special: [
+          { date: '03/08', hours: [ { close: '02:00', open: '12:00' } ], isOpen: true },
+          { date: '05/08', isOpen: false } // Saturday, august 15th: { close: '18:00', open: '08:00' }
+        ]
+      });
+
+      const now = new Date(2020, 7, 4, 1, 45);
+      const asStrings = specialHours.getRemainingHours(now).map(({ open, close }) => ({ open: open.toString(), close: close.toString() }));
+      const expected = [
+        { open: '01:45', close: '02:00' },
+        { open: '08:00', close: '18:00' },
+        { open: '19:00', close: '23:00' },
+        { open: '23:30', close: '03:30' }
+      ];
+
+      expect(asStrings).toEqual(expected);
+    });
+
+    test('it collects and merges all hours for date excluding past midnight', () => {
+      const specialHours = new VisitingHours({
+        regular: {
+          tuesday: {
+            isOpen: true,
+            hours: [
+              { open: '19:00', close: '23:00' },
+              { open: '08:00', close: '18:00' },
+              { open: '23:30', close: '03:30' },
+            ],
+          },
+        },
+        special: [
+          { date: '03/08', hours: [ { close: '02:00', open: '12:00' } ], isOpen: true },
+          { date: '05/08', isOpen: false } // Saturday, august 15th: { close: '18:00', open: '08:00' }
+        ]
+      });
+
+      const now = new Date(2020, 7, 4, 2, 45);
+      const asStrings = specialHours.getRemainingHours(now).map(({ open, close }) => ({ open: open.toString(), close: close.toString() }));
+      const expected = [
+        { open: '08:00', close: '18:00' },
+        { open: '19:00', close: '23:00' },
+        { open: '23:30', close: '03:30' }
+      ];
+
+      expect(asStrings).toEqual(expected);
+    });
+
+    test('it collects and merges all hours skipping the ones in the past', () => {
+      const specialHours = new VisitingHours({
+        regular: {
+          tuesday: {
+            isOpen: true,
+            hours: [
+              { open: '19:00', close: '23:00' },
+              { open: '08:00', close: '18:00' },
+              { open: '23:30', close: '03:30' },
+            ],
+          },
+        },
+        special: [
+          { date: '03/08', hours: [ { close: '02:00', open: '12:00' } ], isOpen: true },
+          { date: '05/08', isOpen: false } // Saturday, august 15th: { close: '18:00', open: '08:00' }
+        ]
+      });
+
+      const now = new Date(2020, 7, 4, 19, 19);
+      const asStrings = specialHours.getRemainingHours(now).map(({ open, close }) => ({ open: open.toString(), close: close.toString() }));
+      const expected = [
+        { open: '19:19', close: '23:00' },
+        { open: '23:30', close: '03:30' }
+      ];
+
+      expect(asStrings).toEqual(expected);
+    });
+
+    test('Combines with range', () => {
+      const specialHours = new VisitingHours({
+        regular: {
+          tuesday: {
+            isOpen: true,
+            hours: [
+              { open: '19:00', close: '23:00' },
+              { open: '08:00', close: '18:00' },
+              { open: '23:30', close: '03:30' },
+            ],
+          },
+        },
+        special: [
+          { date: '03/08', hours: [ { close: '02:00', open: '12:00' } ], isOpen: true },
+          { date: '05/08', isOpen: false } // Saturday, august 15th: { close: '18:00', open: '08:00' }
+        ]
+      });
+
+      const now = new Date(2020, 7, 4, 1, 45);
+      const ranged = specialHours.getRemainingHours(now).reduce((acc, { open, close }) => {
+        acc.push(...Utils.minuteInterval(open.military, close.military, 30));
+
+        return acc;
+      }, []);
+
+      const expected = [
+        '02:00',
+        '08:00',
+        '08:30',
+        '09:00',
+        '09:30',
+        '10:00',
+        '10:30',
+        '11:00',
+        '11:30',
+        '12:00',
+        '12:30',
+        '13:00',
+        '13:30',
+        '14:00',
+        '14:30',
+        '15:00',
+        '15:30',
+        '16:00',
+        '16:30',
+        '17:00',
+        '17:30',
+        '18:00',
+        '19:00',
+        '19:30',
+        '20:00',
+        '20:30',
+        '21:00',
+        '21:30',
+        '22:00',
+        '22:30',
+        '23:00',
+        '23:30',
+        '00:00',
+        '00:30',
+        '01:00',
+        '01:30',
+        '02:00',
+        '02:30',
+        '03:00',
+        '03:30',
+      ];
+
+      expect(ranged.map(String)).toEqual(expected);
+    });
+  });
 });
