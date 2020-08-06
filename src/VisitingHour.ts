@@ -1,3 +1,5 @@
+import { Timezone } from './Timezone';
+
 export class VisitingHour {
   private _date?: Date;
 
@@ -11,9 +13,11 @@ export class VisitingHour {
 
   private _timeValue: number;
 
-  public constructor (timeValue: number)
-  public constructor (timeValue: null, hours: number, minutes: number)
-  public constructor (timeValue?: number | null, hours?: number, minutes?: number) {
+  public zone?: string;
+
+  public relativeToTimestamp?: number;
+
+  public constructor ({ timeValue, hours, minutes, zone, relativeToTimestamp }: VisitingHourOptions) {
     if (typeof timeValue === 'number') {
       this._timeValue = timeValue;
 
@@ -26,9 +30,20 @@ export class VisitingHour {
       return;
     }
 
+    this.relativeToTimestamp = relativeToTimestamp;
+    this.zone = zone;
     this._hours = hours;
     this._minutes = minutes;
     this._timeValue = +`${hours.toString().padStart(2, '0')}${minutes.toString().padStart(2, '0')}`;
+  }
+
+  public static withZone(zone?: string, timeValue?: number | null, hours?: number, minutes?: number): VisitingHour {
+    // Forced typing because it's too flexible for TypeScript's liking.
+    const visitingHour = new VisitingHour({ timeValue, hours, minutes });
+
+    if (zone) visitingHour.setZone(zone);
+
+    return visitingHour;
   }
 
   public get hours (): number {
@@ -55,16 +70,17 @@ export class VisitingHour {
     return this._minutes;
   }
 
+  public setZone(zone: string): void {
+    this.zone = zone;
+  }
+
+  public getZonedDate (zone: string, from: Date = new Date): Date {
+    return Timezone.fromTimeValues(this.hours, this.minutes, zone, from);
+  }
+
   public get date (): Date {
     if (!this._date) {
-      const fixedDate = new Date();
-
-      fixedDate.setHours(this.hours);
-      fixedDate.setMinutes(this.minutes);
-      fixedDate.setSeconds(0);
-      fixedDate.setMilliseconds(0);
-
-      this._date = fixedDate;
+      this._date = Timezone.fromTimeValues(this.hours, this.minutes, this.zone, this.relativeToTimestamp ? new Date(this.relativeToTimestamp) : new Date());
     }
 
     return this._date;
@@ -85,4 +101,12 @@ export class VisitingHour {
   public toString (): string {
     return this.military;
   }
+}
+
+interface VisitingHourOptions {
+  relativeToTimestamp?: number;
+  zone?: string;
+  timeValue?: number | null;
+  hours?: number;
+  minutes?: number;
 }

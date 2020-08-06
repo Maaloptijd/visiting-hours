@@ -2,7 +2,7 @@ import { VisitingHours } from '../src';
 import { DateTime } from 'luxon';
 
 describe('Timezone hours', () => {
-  test('Using luxon', () => {
+  xtest('Using luxon', () => {
     // The hours in the config were written in:
     const zone = 'America/New_York';
 
