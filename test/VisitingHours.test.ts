@@ -4,7 +4,7 @@ import { DateTime } from 'luxon';
 
 describe('VisitingHours', () => {
   describe('Timezone hours', () => {
-    xtest('Using luxon', () => {
+    test('Using luxon', () => {
       // The hours in the config were written in:
       const zone = 'America/New_York';
 
@@ -65,7 +65,7 @@ describe('VisitingHours', () => {
       expect(hours.isOpen(localTimeClosedExact).open).toBeFalsy();
     });
 
-    xtest('Using vanilla (requires IANA tz identifiers)', () => {
+    test('Using vanilla (requires IANA tz identifiers)', () => {
       // The hours in the config were written in:
       const zone = 'America/New_York';
 
@@ -98,7 +98,7 @@ describe('VisitingHours', () => {
       expect(hours.isOpen(Utils.fromDate(new Date(2020, 6, 16, 18), zone)).open).toBeFalsy();
     });
 
-    xtest('Using vanilla through constructor (requires IANA tz identifiers)', () => {
+    test('Using vanilla through constructor (requires IANA tz identifiers)', () => {
       const hours = new VisitingHours({
         zone: 'America/New_York',
         regular: {
@@ -128,7 +128,7 @@ describe('VisitingHours', () => {
       expect(hours.isOpen(new Date(2020, 6, 16, 18)).open).toBeFalsy();
     });
 
-    xtest('properly handles live-caching when using a different timezone', () => {
+    test('properly handles live-caching when using a different timezone', () => {
       // The hours in the config were written in:
       const zone = 'America/New_York';
 
@@ -186,7 +186,7 @@ describe('VisitingHours', () => {
   });
 
   describe('Special hours', () => {
-    xtest('override regular hours and set closed', () => {
+    test('override regular hours and set closed', () => {
       const specialHours = new VisitingHours({
         regular,
         special: [
@@ -201,7 +201,7 @@ describe('VisitingHours', () => {
       expect(specialHours.isOpen(new Date(2020, 6, 15, 23, 1)).open).toBeFalsy(); // Wednesday 15/07 at 23:01
     });
 
-    xtest('override regular hours and set opened', () => {
+    test('override regular hours and set opened', () => {
       const specialHours = new VisitingHours({
         regular,
         special: [
@@ -216,7 +216,7 @@ describe('VisitingHours', () => {
       expect(specialHours.isOpen(new Date(2020, 6, 16, 20, 15)).open).toBeFalsy(); // Thursday 20:15
     });
 
-    xtest('override past midnight open/closed', () => {
+    test('override past midnight open/closed', () => {
       const specialHours = new VisitingHours({
         regular,
         special: [
@@ -231,7 +231,7 @@ describe('VisitingHours', () => {
       expect(specialHours.isOpen(new Date(2020, 6, 17, 2, 15)).open).toBeFalsy(); // Friday 02:15
     });
 
-    xtest('override past midnight open/closed leap year', () => {
+    test('override past midnight open/closed leap year', () => {
       const specialHours = new VisitingHours({
         regular,
         special: [
@@ -243,7 +243,7 @@ describe('VisitingHours', () => {
       expect(specialHours.isOpen(new Date(2020, 1, 29, 2, 15)).open).toBeFalsy();
     });
 
-    xtest('override past midnight leap year', () => {
+    test('override past midnight leap year', () => {
       const specialHours = new VisitingHours({
         regular,
         special: [
@@ -255,7 +255,7 @@ describe('VisitingHours', () => {
       expect(specialHours.isOpen(new Date(2020, 2, 1, 1, 15)).open).toBeTruthy(); // Leap year, leap day. Past midnight.
     });
 
-    xtest('override past midnight leap day but not leap year', () => {
+    test('override past midnight leap day but not leap year', () => {
       const specialHours = new VisitingHours({
         regular,
         special: [
@@ -267,7 +267,7 @@ describe('VisitingHours', () => {
       expect(specialHours.isOpen(new Date(2020, 2, 1, 1, 15)).open).toBeTruthy(); // Leap year, pastMidnight will affect this.
     });
 
-    xtest('override past midnight leap day but not leap year', () => {
+    test('override past midnight leap day but not leap year', () => {
       const specialHours = new VisitingHours({
         regular,
         special: [
@@ -279,7 +279,7 @@ describe('VisitingHours', () => {
       expect(specialHours.isOpen(new Date(2020, 2, 1, 1, 15)).open).toBeFalsy();
     });
 
-    xtest('caches for overrides; both hours and setting closed', () => {
+    test('caches for overrides; both hours and setting closed', () => {
       const specialHours = new VisitingHours({
         live: true,
         regular,
@@ -364,7 +364,7 @@ describe('VisitingHours', () => {
   describe('Regular hours', () => {
     const hours = new VisitingHours({ regular });
 
-    xtest('the basics', () => {
+    test('the basics', () => {
       const hours = new VisitingHours({
         regular: {
           sunday: { isOpen: false },
@@ -409,43 +409,43 @@ describe('VisitingHours', () => {
       expect(hours.isOpen(new Date(2020, 11, 25, 14, 15)).open).toBeFalsy();
     });
 
-    xtest('is open during regular hours', () => {
+    test('is open during regular hours', () => {
       expect(hours.isOpen(new Date(2020, 6, 13, 12)).open).toBeTruthy(); // Monday, 12:00
     });
 
-    xtest('is open at exactly the opening time', () => {
+    test('is open at exactly the opening time', () => {
       expect(hours.isOpen(new Date(2020, 6, 13, 11, 15)).open).toBeTruthy(); // Monday, 11:15
     });
 
-    xtest('is closed on normal closed times', () => {
+    test('is closed on normal closed times', () => {
       expect(hours.isOpen(new Date(2020, 6, 12, 12)).open).toBeFalsy(); // Sunday, 12:00
     });
 
-    xtest('is closed right before opening time', () => {
+    test('is closed right before opening time', () => {
       expect(hours.isOpen(new Date(2020, 6, 13, 11, 14, 59)).open).toBeFalsy(); // Monday, 11:14:59
     });
 
-    xtest('is open right before midnight', () => {
+    test('is open right before midnight', () => {
       expect(hours.isOpen(new Date(2020, 6, 13, 23, 59, 59)).open).toBeTruthy(); // Monday, 23:59:59
     });
 
-    xtest('is open past midnight', () => {
+    test('is open past midnight', () => {
       expect(hours.isOpen(new Date(2020, 6, 14, 0, 30)).open).toBeTruthy(); // Tuesday 00:30
     });
 
-    xtest('is open right past midnight', () => {
+    test('is open right past midnight', () => {
       expect(hours.isOpen(new Date(2020, 6, 14)).open).toBeTruthy(); // Tuesday 00:00
     });
 
-    xtest('is closed right after midnight closing', () => {
+    test('is closed right after midnight closing', () => {
       expect(hours.isOpen(new Date(2020, 6, 14, 1)).open).toBeFalsy(); // Tuesday 01:00
     });
 
-    xtest('is closed after midnight closing', () => {
+    test('is closed after midnight closing', () => {
       expect(hours.isOpen(new Date(2020, 6, 14, 1, 15)).open).toBeFalsy(); // Tuesday 01:15
     });
 
-    xtest('is closed when entire day is closed', () => {
+    test('is closed when entire day is closed', () => {
       expect(hours.isOpen(new Date(2020, 6, 16, 1, 15)).open).toBeFalsy(); // Thursday 01:15
       expect(hours.isOpen(new Date(2020, 6, 16, 10, 15)).open).toBeFalsy(); // Thursday 10:15
       expect(hours.isOpen(new Date(2020, 6, 16, 12, 15)).open).toBeFalsy(); // Thursday 12:15
@@ -453,7 +453,7 @@ describe('VisitingHours', () => {
       expect(hours.isOpen(new Date(2020, 6, 16, 20, 15)).open).toBeFalsy(); // Thursday 20:15
     });
 
-    xtest('caches result as long as the date is in same range', () => {
+    test('caches result as long as the date is in same range', () => {
       const hours = new VisitingHours({ live: true, regular });
 
       const firstResult = hours.isOpen(new Date(2020, 6, 13, 12));
@@ -474,7 +474,7 @@ describe('VisitingHours', () => {
       expect(fourthResult).not.toBe(fifthResult);
     });
 
-    xtest('caches results for the rest of the day when closed', () => {
+    test('caches results for the rest of the day when closed', () => {
       const hours = new VisitingHours({ live: true, regular });
 
       // Test Saturday, move on to Sunday (which is closed).
@@ -514,7 +514,7 @@ describe('VisitingHours', () => {
   });
 
   describe('Fetching hours', () => {
-    xtest('it collects and merges all hours for date across three days', () => {
+    test('it collects and merges all hours for date across three days', () => {
       const specialHours = new VisitingHours({
         regular: {
           tuesday: {
@@ -544,7 +544,7 @@ describe('VisitingHours', () => {
       expect(asStrings).toEqual(expected);
     });
 
-    xtest('it collects and merges all hours for date excluding past midnight', () => {
+    test('it collects and merges all hours for date excluding past midnight', () => {
       const specialHours = new VisitingHours({
         regular: {
           tuesday: {
@@ -573,7 +573,7 @@ describe('VisitingHours', () => {
       expect(asStrings).toEqual(expected);
     });
 
-    xtest('it collects and merges all hours skipping the ones in the past', () => {
+    test('it collects and merges all hours skipping the ones in the past', () => {
       const specialHours = new VisitingHours({
         regular: {
           tuesday: {
@@ -628,7 +628,7 @@ describe('VisitingHours', () => {
       expect(interval[0].date.getTime()).toEqual(1596679200000);
     });
 
-    xtest('Combines with range', () => {
+    test('Combines with range', () => {
       const specialHours = new VisitingHours({
         regular: {
           tuesday: {
