@@ -1,21 +1,16 @@
-import { VisitingHoursConfigInterface } from './Interface/VisitingHoursConfigInterface';
-import { Utils } from './Utils';
-import { IndexInterface } from './Interface/IndexInterface';
-import { SpecialIndexInterface } from './Interface/SpecialIndexInterface';
-import { IndexedHoursInterface } from './Interface/IndexedHoursInterface';
-import { DateInputInterface } from './Interface/DateInputInterface';
-import { LuxonShapeInterface } from './Interface/LuxonShapeInterface';
-import { VisitingHour } from './VisitingHour';
-import { HourMatchInterface } from './Interface/HourMatchInterface';
+import type { VisitingHoursConfigInterface } from './Interface/VisitingHoursConfigInterface';
+import type { DateInputInterface } from './Interface/DateInputInterface';
+import type { LuxonShapeInterface } from './Interface/LuxonShapeInterface';
+import type { HourMatchInterface } from './Interface/HourMatchInterface';
+import type { HourMatchSetInterface } from './Interface/HourMatchSetInterface';
+import type { HoursInterface } from './Interface/HoursInterface';
 import { Timezone } from './Timezone';
-import { HourMatchSetInterface } from './Interface/HourMatchSetInterface';
-import { HoursInterface } from './Interface/HoursInterface';
+import { Utils } from './Utils';
+import { VisitingHour } from './VisitingHour';
+import { HoursIndex } from './HoursIndex';
+import { HoursQuery } from './HoursQuery';
 
 export class VisitingHours {
-  private index?: IndexInterface;
-
-  private specialIndex?: SpecialIndexInterface;
-
   private zone?: string;
 
   private live: boolean;
@@ -26,9 +21,14 @@ export class VisitingHours {
 
   private validUntil = 0;
 
+  private hoursIndex: HoursIndex;
+
   public constructor ({ regular, special, zone, live }: VisitingHoursConfigInterface) {
-    if (regular) this.index = Utils.buildIndex(regular);
-    if (special) this.specialIndex = Utils.buildSpecialIndex(special);
+    this.hoursIndex = new HoursIndex({
+      regularIndex: regular ? Utils.buildIndex(regular) : undefined,
+      specialIndex: special ? Utils.buildSpecialIndex(special) : undefined
+    });
+
     if (zone) this.zone = zone;
 
     this.live = !!live;
@@ -40,29 +40,30 @@ export class VisitingHours {
 
     if (cacheResult) return cacheResult;
 
-    const { hour, minute, month, day } = date;
+    const { hour, minute, month, day, zoneName, ts } = date;
+    const zone = zoneName || this.zone;
     const key = +`${hour}${minute.toString().padStart(2, '0')}`;
-    const { regularDate, specialDate, leapYearDate, postLeapYearDate } = this.dateKeys(date);
+    const { regularDate, specialDate, leapYearDate, postLeapYearDate } = this.hoursIndex.dateKeys(date);
 
     if (postLeapYearDate && month === 2 && day === 1 && date.isInLeapYear) {
-      const result = this.checkSpecialDay(key, postLeapYearDate);
+      const result = this.hoursIndex.checkSpecialDay(new HoursQuery(key, postLeapYearDate, !this.live, zone, ts));
 
       if (typeof result !== 'undefined') return this.writeCache(result, date);
     }
 
     if (leapYearDate && ((month === 1 && day === 29) || (month === 2 && day === 1 && !date.isInLeapYear))) {
-      const result = this.checkSpecialDay(key, leapYearDate);
+      const result = this.hoursIndex.checkSpecialDay(new HoursQuery(key, leapYearDate, !this.live, zone, ts));
 
       if (typeof result !== 'undefined') return this.writeCache(result, date);
     }
 
     if (specialDate) {
-      const result = this.checkSpecialDay(key, specialDate);
+      const result = this.hoursIndex.checkSpecialDay(new HoursQuery(key, specialDate, !this.live, zone, ts));
 
       if (typeof result !== 'undefined') return this.writeCache(result, date);
     }
 
-    return this.writeCache(this.checkDay(key, regularDate), date);
+    return this.writeCache(this.hoursIndex.checkDay(new HoursQuery(key, regularDate, !this.live, zone, ts)), date);
   }
 
   /**
@@ -70,9 +71,10 @@ export class VisitingHours {
    */
   public getRemainingHours (inputDate: UndeterminedDateInputType): HourMatchSetInterface[] {
     const date = this.getDateInput(inputDate);
-    const { hour, minute, month, day } = date;
+    const { hour, minute, month, day, zoneName, ts } = date;
+    const zone = zoneName || this.zone;
     const key = +`${hour}${minute.toString().padStart(2, '0')}`;
-    const { regularDate, specialDate, leapYearDate, postLeapYearDate } = this.dateKeys(date);
+    const { regularDate, specialDate, leapYearDate, postLeapYearDate } = this.hoursIndex.dateKeys(date);
     const allHours: HourMatchSetInterface[] = [];
 
     function addBase (forHours: HoursInterface[]) {
@@ -84,7 +86,7 @@ export class VisitingHours {
         // We only want future times here.
         if ((c < o ? c + 2400 : c) < key) return;
 
-        allHours.push({ open: new VisitingHour(o > key ? o : key), close: new VisitingHour(c)});
+        allHours.push({ open: new VisitingHour({ timeValue: o > key ? o : key, relativeToTimestamp: ts, zone }), close: new VisitingHour({ timeValue: c, relativeToTimestamp: ts, zone })});
 
         if (o < lowest) lowest = o;
       });
@@ -102,7 +104,7 @@ export class VisitingHours {
     function collect (hours: [number, number][]) {
       const hour = hours?.find(([o, c]) => o === 0 && c > key && c < lowest);
 
-      if (hour) allHours.push({ open: new VisitingHour(key), close: new VisitingHour(hour[1])});
+      if (hour) allHours.push({ open: new VisitingHour({ timeValue: key, relativeToTimestamp: ts, zone }), close: new VisitingHour({ timeValue: hour[1], relativeToTimestamp: ts, zone })});
     }
 
     // Now let's collect a range past midnight. It can only be one of these.
@@ -127,64 +129,6 @@ export class VisitingHours {
       : asLuxon.isLuxonDateTime ? Utils.fromLuxon(asLuxon) : inputDate as DateInputInterface;
   }
 
-  private dateKeys (date: DateInputInterface) {
-    const { month, day, weekday } = date;
-
-    return {
-      specialDate: this.specialIndex?.[`${day}/${month}`] || null,
-      leapYearDate: this.specialIndex?.[Utils.leapYearKey] || null,
-      postLeapYearDate: this.specialIndex?.[Utils.postLeapYearKey] || null,
-      regularDate: this.index?.[weekday]
-    };
-  }
-
-  private checkSpecialDay(key: number, day: IndexedHoursInterface): HourMatchInterface | void {
-    const dayResult = this.checkDay(key, day);
-
-    if (dayResult) {
-      return dayResult;
-    }
-
-    if (typeof day.open === 'boolean') {
-      return this.makeHourResult();
-    }
-  }
-
-  private checkDay (key: number, day?: IndexedHoursInterface): HourMatchInterface {
-    if (!day?.open && !day?.pastMidnight) {
-      return this.makeHourResult();
-    }
-
-    return this.findHour(day?.hours ?? [], key, !day.open);
-  }
-
-  private findHour(hours: IndexedHoursInterface['hours'] = [], x: number, skipSoonest = false): HourMatchInterface {
-    // No need to check soonest, do fast lookup.
-    if (!this.live || skipSoonest) {
-      const open = hours?.find(([o, c]) => (x-o ^ x-c) < 0);
-
-      return this.makeHourResult(open);
-    }
-
-    let soonest: number | null = null;
-
-    for (const hour of hours) {
-      const [o, c] = hour;
-
-      // When open stop looking for soonest (because we don't care)
-      if ((x-o ^ x-c) < 0) {
-        return this.makeHourResult(hour);
-      }
-
-      // No match yet, keep track of soonest opening hours.
-      if (o > x && (soonest === null || soonest > o)) soonest = o;
-    }
-
-    if (soonest === null) return this.makeHourResult();
-
-    return this.makeHourResult(undefined, soonest);
-  }
-
   private checkCache (input: DateInputInterface): HourMatchInterface | void {
     if (!this.live || !this.lastMatch || input.ts >= this.validUntil || (this?.lastTimeStamp ?? 0) > input.ts) return;
 
@@ -201,6 +145,7 @@ export class VisitingHours {
     return { source: inTZ, offset: source.getTime() - inTZ.getTime() };
   }
 
+  // @todo see if we can use Timezone.fromTimeValues here
   private writeCache (hoursMatch: HourMatchInterface, input: DateInputInterface): HourMatchInterface {
     if (!this.live) return hoursMatch;
 
@@ -222,14 +167,6 @@ export class VisitingHours {
     this.lastMatch = hoursMatch;
 
     return hoursMatch;
-  }
-
-  private makeHourResult (hours?: [number, number], soonest?: number): HourMatchInterface {
-    return {
-      open: !!hours,
-      soonest: soonest ? new VisitingHour(soonest) : null,
-      match: hours ? { open: new VisitingHour(hours[0]), close: new VisitingHour(hours[1]) } : null,
-    };
   }
 }
 

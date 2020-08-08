@@ -48,16 +48,22 @@ export class Timezone {
     return offsetMilliseconds ? new Date(utcDate.getTime() + (-offsetMilliseconds)) : utcDate;
   }
 
-  public static fromTimeString (time: string, zone: string, now = new Date): Date {
-    const [h, m] = time.split(':').map(Number);
-    const zoned = Timezone.utcToZonedTime(now, zone);
+  public static fromTimeValues (hours: number, minutes: number, zone?: string, now = new Date): Date {
+    const zoned = zone ? Timezone.utcToZonedTime(now, zone) : new Date(now);
     const diff = now.getTime() - zoned.getTime();
 
-    zoned.setHours(h + (zoned.getHours() > h ? 24 : 0));
-    zoned.setMinutes(m);
+    zoned.setHours(hours + (zoned.getHours() > hours ? 24 : 0));
+    zoned.setMinutes(minutes);
+    zoned.setSeconds(0);
     zoned.setMilliseconds(diff);
 
     return zoned;
+  }
+
+  public static fromTimeString (time: string, zone: string, now = new Date): Date {
+    const [h, m] = time.split(':').map(Number);
+
+    return Timezone.fromTimeValues(h, m, zone, now);
   }
 }
 

@@ -601,6 +601,33 @@ describe('VisitingHours', () => {
       expect(asStrings).toEqual(expected);
     });
 
+    test('Correct timezones associated in range +3.', () => {
+      const interval = Utils.minuteInterval('19:15', '19:30', 15, 'Europe/Istanbul', new Date(2020, 7, 3, 12));
+
+      // Mon Aug 03 2020 18:15:00 GMT+0200 (Central European Summer Time)
+      // 2020-08-03T16:15:00.000Z: 1596471300000
+      // new Date(2020, 7, 3, 18, 15);
+      expect(interval[0].date.getTime()).toEqual(1596471300000);
+
+      // Mon Aug 03 2020 18:30:00 GMT+0200 (Central European Summer Time)
+      // 2020-08-03T16:30:00.000Z: 1596472200000
+      // new Date(2020, 7, 3, 18, 30);
+      expect(interval[1].date.getTime()).toEqual(1596472200000);
+    });
+
+    test('Correct timezones associated in range -4.', () => {
+      const interval = Utils.minuteInterval('17:00', '17:15', 15, 'America/New_York', new Date(2020, 7, 6, 16, 15));
+
+      expect(interval[0].date.getTime()).toEqual(1596747600000);
+      expect(interval[1].date.getTime()).toEqual(1596748500000);
+    });
+
+    test('Correct timezones associated in range -4 carried over midnight.', () => {
+      const interval = Utils.minuteInterval('22:00', '22:15', 15, 'America/New_York', new Date(2020, 7, 6, 3));
+
+      expect(interval[0].date.getTime()).toEqual(1596679200000);
+    });
+
     test('Combines with range', () => {
       const specialHours = new VisitingHours({
         regular: {

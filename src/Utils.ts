@@ -43,8 +43,9 @@ export class Utils {
    * @param startAt
    * @param endAt
    * @param interval
+   * @param {Date} [forDate] What date the range is for. Adds a timestamp to the VisitingHour.
    */
-  public static minuteInterval (startAt: string, endAt: string, interval = 15): VisitingHour[] {
+  public static minuteInterval (startAt: string, endAt: string, interval = 15, forZone?: string, forDate?: Date): VisitingHour[] {
     const [sh, sm] = startAt.split(':').map(Number);
     const [eh, em] = endAt.split(':').map(Number);
     const lastStep = (60 - interval);
@@ -59,7 +60,7 @@ export class Utils {
       const i = ip % 24;
 
       for (let j = startHour === i ? startMinute : 0; j <= (i === endHour ? lastMinute : lastStep); j += interval) {
-        values.push(new VisitingHour(null, i, j));
+        values.push(new VisitingHour({ hours: i, minutes: j, zone: forZone, relativeToTimestamp: forDate?.getTime() ?? undefined }));
       }
     }
 
